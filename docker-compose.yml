@@ -1,0 +1,13 @@
+version: '2.0'
+services:
+  indexer:
+    build: .
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      environment: intg
+      awsregion: us-west-2
+      esearchdomain: 'search-opus-se-opusel-s121y41jqhue-5tb2gazlxayhwnilcu2biombde.us-west-2.es.amazonaws.com'
+      clientsecret: ${clientsecret}
+    ports:
+    - "80:8181"

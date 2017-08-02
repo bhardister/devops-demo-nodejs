@@ -1,0 +1,14 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Image": {
+    "Name": "031974103859.dkr.ecr.us-west-2.amazonaws.com/devops-demo-nodejs:latest",
+    "Update": "true"
+  },
+  "Ports": [
+    {
+      "ContainerPort": "8181",
+      "HostPort": "80"
+    }
+  ],
+  "Logging": "/var/log/"
+}

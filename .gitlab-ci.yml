@@ -1,0 +1,57 @@
+before_script:
+  - repoName="devops-demo-nodejs"
+  - printf "repoName = %s\n" $repoName
+  - buildRef=$CI_BUILD_REF
+  - shortSha=${buildRef:0:8}
+  - printf "shortSha = %s\n" $shortSha
+  - workDir=$CI_PROJECT_DIR
+  - printf "workDir = %s\n" $workDir
+  - branch=$CI_BUILD_REF_NAME
+  - printf "branch = %s\n" $branch
+  - runnerIp=$(curl -sS  http://169.254.169.254/latest/meta-data/public-ipv4)
+  - printf "runnerIp = %s\n" $runnerIp
+  - instanceId=$(curl -sS http://169.254.169.254/latest/meta-data/instance-id)
+  - printf "instanceId = %s\n" $instanceId
+
+stages:
+  - build
+  - test
+  - push
+  - deploy
+
+Build:
+  stage: build
+  allow_failure: true
+  only:
+    - master
+  script:
+    - docker build -t 031974103859.dkr.ecr.us-west-2.amazonaws.com/$repoName:$shortSha .
+
+Test:
+  stage: test
+  script:
+    - docker run 031974103859.dkr.ecr.us-west-2.amazonaws.com/$repoName:$shortSha npm run test
+
+Push:
+  stage: push
+  script:
+    - $(aws ecr get-login --region us-west-2)
+    - docker push 031974103859.dkr.ecr.us-west-2.amazonaws.com/$repoName:$shortSha
+    - cd $workDir
+    - sed -i s/:latest/:$shortSha/g Dockerrun.aws.json
+    - zip -r $repoName-$shortSha.zip .ebextensions Dockerrun.aws.json
+    - aws s3 cp $repoName-$shortSha.zip s3://$repoName-build-output-us-west-2/$repoName-$shortSha.zip
+
+#Deploy:
+#  stage: deploy
+#  script:
+#    - teamcityBuildCfgId=$TEAMCITY_BUILD_CFG_ID
+#    - printf "teamcityBuildCfgId = %s\n" $teamcityBuildCfgId
+#    - >-
+#      curl
+#      --header "Content-Type: application/xml"
+#      -H "Accept: application/json"
+#      -X POST -u teamcitycitrigger:$CI_BUILD_PW
+#      -d  "<build><buildType id=\""$teamcityBuildCfgId"\"/><properties><property name=\"gitLabCiShortSha\" value=\""$shortSha"\"/></properties></build>"
+#      -sS
+#      http://teamcity.educationpartners.com/httpAuth/app/rest/buildQueue
